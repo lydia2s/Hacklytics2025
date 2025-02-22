@@ -12,7 +12,7 @@ st.write(
 st.title("Image Uploader")
 
 # File Uploader: Accepts images only
-uploaded_file = st.file_uploader("📤 Upload an image (JPG, JPEG, PNG)", type=["jpg", "jpeg", "png"])
+uploaded_file = st.file_uploader("Upload an image (JPG, JPEG, PNG)", type=["jpg", "jpeg", "png"])
 
 if uploaded_file:
     # Open image using PIL
@@ -27,15 +27,20 @@ if uploaded_file:
     st.write(f"**Format:** {image.format}")
     st.write(f"**Size:** {image.size}")
 
-else:
-    st.info("📌 Please upload an image to display.")
-
 ##get damage type, severity, and affected parts from image
 
 # Set your OpenAI API key
-openai.api_key = "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"
+from openai import OpenAI
 
-def get_damage_estimate(damage_type, severity, affected_parts):
+client = OpenAI(api_key="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") 
+openai.api_key = "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"
+
+damage_type = "Crack"  # Placeholder; should be detected by AI in future
+severity = "Moderate"
+affected_parts = ["Wall", "Ceiling"]
+labor_cost_factor = 1.2  # Placeholder value
+
+def get_damage_estimate(damage_type, severity, affected_parts, location, labor_cost_factor):
     prompt = f"""
     You are an expert in repair cost estimation. Given the details below, provide an estimated cost range in USD with a breakdown of parts, labor, and additional costs.
 
@@ -53,16 +58,23 @@ def get_damage_estimate(damage_type, severity, affected_parts):
     - Additional Costs: $C (paint, finishing, etc.)
     """
 
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt}]
     )
 
-    return response["choices"][0]["message"]["content"]
+    return response.choices[0].message.content
 
 # Collect user input
-location = input("Where is the home geographically located (e.g., Los Angeles, CA): ")
-spending = input("How willing are you to spend on repairing the damage (low, medium, high): ")
+location = st.text_input("Where is the home geographically located (e.g., Los Angeles, CA): ")
+spending = st.selectbox("Willingness to spend:", ["Low", "Medium", "High"])
+
+if st.button("Get Repair Estimate"):
+        with st.spinner("🔄 Analyzing the image and calculating costs..."):
+            estimate = get_damage_estimate(damage_type, severity, affected_parts, location, labor_cost_factor)
+        st.subheader("Estimated Repair Cost:")
+        st.write(estimate)
+
 
 # Get and print the cost estimate
 estimate = get_damage_estimate(damage_type, severity, affected_parts, location, labor_cost_factor)
