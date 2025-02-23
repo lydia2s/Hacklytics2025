@@ -13,84 +13,63 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-        /* Apply dark blue background to entire page */
-        body, .stApp {
-            background-color: #001F3F; /* Dark Blue */
-            color: white; /* White text */
-        }
-
-        /* Style the sidebar with a slightly lighter blue */
-        [data-testid="stVerticalBlock"] > div:first-child {
-            background-color: #ECECEC; /* Slightly lighter blue for sidebar */
-            padding: 20px;
-            border-radius: 10px;
-        }
-
-        /* Center the title */
+        /* Remove background for RenoVision */
         .header-container {
             text-align: center;
             width: 100%;
             margin-top: 0px;
+            background: none !important;
+            padding-bottom: 10px;
         }
-        .header-container h1 {
-            color: #ff4d00;
+
+        /* Style the RenoVision title */
+        .renovision-title {
             font-size: 50px;
             margin: 0;
-        }
-
-        /* Style text globally */
-        h1, h2, h3, h4, h5, h6, p, label, span {
+            background: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            border: none !important;
             color: white !important;
         }
 
-        /* Style buttons */
-        .stButton>button {
-            background-color: #004080; /* Darker Blue */
-            color: white;
-            border-radius: 5px;
+        /* Style the separator */
+        .separator {
+            width: 80%;
+            height: 2px;
+            background-color: white;
+            margin: 20px auto;
+            border-radius: 2px;
         }
-        .stButton>button:hover {
-            background-color: #0055A4; /* Lighter Blue on Hover */
-        }
-
-        /* Style info/warning boxes */
-        .stAlert {
-            background-color: #003366 !important; 
-            color: white !important;
-        }
-
-        /* Style input fields */
-        .stTextInput>div>div>input,
-        .stSelectbox>div>div>div {
-            background-color: #003366 !important;
-            color: white !important;
-        }
-
     </style>
 
     <div class="header-container">
-        <h1 style>RenoVision</h1>
+        <h1 class="renovision-title">RenoVision</h1>
+        <h6 title> Renovation with a New Vision. </h1 header>
+        
     </div>
     """,
+
     unsafe_allow_html=True
 )
+
+
 
 # ---- Layout: Sidebar (1) | Main Content (2) ----
 col1, col2 = st.columns([1, 2], gap="medium")
 
 with col1:
     # ---- Sidebar ----
-    st.subheader("Navigation")
     mode = st.radio("Select Mode:", ["Image Analysis", "Chat Assistant"])
     st.info("Receive a personalized repair estimate based on your location and the current market.")
 
     # File Uploader (Only in Sidebar, Used for Image Analysis)
-    uploaded_file = st.file_uploader("📤 Upload an image (JPG, JPEG, PNG)", type=["jpg", "jpeg", "png"])
+    uploaded_file = st.file_uploader("Upload an image (JPG, JPEG, PNG)", type=["jpg", "jpeg", "png"])
 
 with col2:
     # ---- Mode Switching ----
     if mode == "Image Analysis":
-        st.header("🔍 Image Analysis")
+        st.header("Image Analysis")
         
         if uploaded_file:
             image = Image.open(uploaded_file)
@@ -107,7 +86,7 @@ with col2:
             location = st.text_input("Home Location")
             spending = st.selectbox("Willingness to Spend:", ["Low", "Medium", "High"])
 
-            if st.button("🔍 Get Repair Estimate"):
+            if st.button("Get Repair Estimate"):
                 with st.spinner("Analyzing the image and calculating costs..."):
                     estimate = f"Estimated cost range: $1000 - $2000\n- Parts: $500\n- Labor: $1200\n- Additional: $300"
                 
@@ -122,10 +101,10 @@ with col2:
                     unsafe_allow_html=True
                 )
         else:
-            st.info("📤 Please upload an image to start the analysis.")
+            st.info("Please upload an image to start the analysis.")
 
     elif mode == "Chat Assistant":
-        st.header("💬 Chat Assistant")
+        st.header("Chat Assistant")
 
         # Chat Input
         user_input = st.text_input("Ask me about home repairs, damage estimates, and renovation tips.")
