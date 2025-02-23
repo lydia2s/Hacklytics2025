@@ -1,46 +1,57 @@
 import streamlit as st
 from PIL import Image
 import openai
-from openai import OpenAI
-import streamlit as st
 
-# Show title and description.
-st.title("Housing Damage Assessment")
-st.write(
-    "Upload an image below from library or camera roll for personalized damage and cost assessing."
+# ---- Set Page Configuration ----
+st.set_page_config(
+    page_title="Housing Damage Assessment",
+    page_icon="🔍",
+    layout="wide"
 )
 
-# Title
-st.title("Image Uploader")
+# ---- Layout: Sidebar (1) | Main Content (2) ----
+col1, col2 = st.columns([1, 2], gap="medium")
 
-# File Uploader: Accepts images only
-uploaded_file = st.file_uploader("Upload an image (JPG, JPEG, PNG)", type=["jpg", "jpeg", "png"])
+with col1:
+    # ---- Sidebar (Fixed Width) ----
+    st.title("RenoVision")
+    st.image("images/logo.png")
+    mode = st.radio("Select Mode:", ["Image Analysis", "Chat Assistant"])
+    st.info("Receive a personalized repair estimate based on your location and the current market.")
 
-if uploaded_file:
-    # Open image using PIL
-    image = Image.open(uploaded_file)
-    
-    # Display the image
-    st.subheader("Uploaded Image:")
-    st.image(image, caption="Your Image", use_container_width=True)
+    # File Uploader (Only in Sidebar)
+    uploaded_file = st.file_uploader("📤 Upload an image (JPG, JPEG, PNG)", type=["jpg", "jpeg", "png"])
 
-    # Optional: Show image details
-    st.write(f"**Filename:** {uploaded_file.name}")
-    st.write(f"**Format:** {image.format}")
-    st.write(f"**Size:** {image.size}")
+with col2:
+    # ---- Main Section ----
 
-##get damage type, severity, and affected parts from image
+    # Enlarged Image Upload Section
+    if uploaded_file:
+        image = Image.open(uploaded_file)
+        
+        # Display the image (Larger)
+        st.subheader("Uploaded Image:")
+        st.image(image, caption="Your Image", use_container_width=True)
 
-# Set your OpenAI API key
+        # Show image details
+        st.write(f"**Repair Type:** {uploaded_file.name}")  # Replace with AI-generated type
+        st.write(f"**Severity:** {image.format}")  # Replace with AI-generated severity
 
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"]) 
+    else:
+        st.info("Please upload an image to start analysis.")
 
-damage_type = "Crack"  # Placeholder; should be detected by AI in future
+# ---- OpenAI API Client ----
+OPEN_AI_KEY = st.secrets["AI_KEY"]
+openai.api_key = OPEN_AI_KEY  # Correctly setting the API key
+
+# Placeholder values (Replace with AI detection in future)
+damage_type = "Crack"
 severity = "Moderate"
 affected_parts = ["Wall", "Ceiling"]
-labor_cost_factor = 1.2  # Placeholder value
+labor_cost_factor = 1.2
 
 def get_damage_estimate(damage_type, severity, affected_parts, location, labor_cost_factor):
+    """Sends details to OpenAI to estimate repair costs."""
     prompt = f"""
     You are an expert in repair cost estimation. Given the details below, provide an estimated cost range in USD with a breakdown of parts, labor, and additional costs.
 
@@ -58,24 +69,28 @@ def get_damage_estimate(damage_type, severity, affected_parts, location, labor_c
     - Additional Costs: $C (paint, finishing, etc.)
     """
 
-    response = client.chat.completions.create(
+    response = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt}]
     )
 
-    return response.choices[0].message.content
+    return response["choices"][0]["message"]["content"]
 
-# Collect user input
-location = st.text_input("Where is the home geographically located (e.g., Los Angeles, CA): ")
-spending = st.selectbox("Willingness to spend:", ["Low", "Medium", "High"])
+# ---- User Inputs ----
+location = st.text_input("Home Location")
+spending = st.selectbox("Willingness to Spend:", ["Low", "Medium", "High"])
 
 if st.button("Get Repair Estimate"):
-        with st.spinner("🔄 Analyzing the image and calculating costs..."):
-            estimate = get_damage_estimate(damage_type, severity, affected_parts, location, labor_cost_factor)
-        st.subheader("Estimated Repair Cost:")
-        st.write(estimate)
-
-
-# Get and print the cost estimate
-estimate = get_damage_estimate(damage_type, severity, affected_parts, location, labor_cost_factor)
-print("\nEstimated Repair Cost:\n", estimate)
+    with st.spinner("Analyzing the image and calculating costs..."):
+        estimate = get_damage_estimate(damage_type, severity, affected_parts, location, labor_cost_factor)
+    
+    # Chat-style response
+    st.markdown(
+        f"""
+        <div style='background-color:#00a5e3; padding:15px; border-radius:10px; color:white;'>
+            <b>Estimated Repair Cost:</b>  
+            {estimate}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
