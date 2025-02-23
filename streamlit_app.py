@@ -1,6 +1,8 @@
 import streamlit as st
 from PIL import Image
 import openai
+from openai import OpenAI
+import streamlit as st
 
 # Show title and description.
 st.title("Housing Damage Assessment")
@@ -30,10 +32,8 @@ if uploaded_file:
 ##get damage type, severity, and affected parts from image
 
 # Set your OpenAI API key
-from openai import OpenAI
 
-client = OpenAI(api_key="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") 
-openai.api_key = "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"
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"]) 
 
 damage_type = "Crack"  # Placeholder; should be detected by AI in future
 severity = "Moderate"
