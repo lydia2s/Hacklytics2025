@@ -9,88 +9,142 @@ st.set_page_config(
     layout="wide"
 )
 
+# ---- Custom CSS for Full Dark Blue Background & White Text ----
+st.markdown(
+    """
+    <style>
+        /* Apply dark blue background to entire page */
+        body, .stApp {
+            background-color: #001F3F; /* Dark Blue */
+            color: white; /* White text */
+        }
+
+        /* Style the sidebar with a slightly lighter blue */
+        [data-testid="stVerticalBlock"] > div:first-child {
+            background-color: #ECECEC; /* Slightly lighter blue for sidebar */
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        /* Center the title */
+        .header-container {
+            text-align: center;
+            width: 100%;
+            margin-top: 0px;
+        }
+        .header-container h1 {
+            color: #ff4d00;
+            font-size: 50px;
+            margin: 0;
+        }
+
+        /* Style text globally */
+        h1, h2, h3, h4, h5, h6, p, label, span {
+            color: white !important;
+        }
+
+        /* Style buttons */
+        .stButton>button {
+            background-color: #004080; /* Darker Blue */
+            color: white;
+            border-radius: 5px;
+        }
+        .stButton>button:hover {
+            background-color: #0055A4; /* Lighter Blue on Hover */
+        }
+
+        /* Style info/warning boxes */
+        .stAlert {
+            background-color: #003366 !important; 
+            color: white !important;
+        }
+
+        /* Style input fields */
+        .stTextInput>div>div>input,
+        .stSelectbox>div>div>div {
+            background-color: #003366 !important;
+            color: white !important;
+        }
+
+    </style>
+
+    <div class="header-container">
+        <h1 style>RenoVision</h1>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
 # ---- Layout: Sidebar (1) | Main Content (2) ----
 col1, col2 = st.columns([1, 2], gap="medium")
 
 with col1:
-    # ---- Sidebar (Fixed Width) ----
-    st.title("RenoVision")
-    st.image("images/logo.png")
+    # ---- Sidebar ----
+    st.subheader("Navigation")
     mode = st.radio("Select Mode:", ["Image Analysis", "Chat Assistant"])
     st.info("Receive a personalized repair estimate based on your location and the current market.")
 
-    # File Uploader (Only in Sidebar)
+    # File Uploader (Only in Sidebar, Used for Image Analysis)
     uploaded_file = st.file_uploader("📤 Upload an image (JPG, JPEG, PNG)", type=["jpg", "jpeg", "png"])
 
 with col2:
-    # ---- Main Section ----
-
-    # Enlarged Image Upload Section
-    if uploaded_file:
-        image = Image.open(uploaded_file)
+    # ---- Mode Switching ----
+    if mode == "Image Analysis":
+        st.header("🔍 Image Analysis")
         
-        # Display the image (Larger)
-        st.subheader("Uploaded Image:")
-        st.image(image, caption="Your Image", use_container_width=True)
+        if uploaded_file:
+            image = Image.open(uploaded_file)
 
-        # Show image details
-        st.write(f"**Repair Type:** {uploaded_file.name}")  # Replace with AI-generated type
-        st.write(f"**Severity:** {image.format}")  # Replace with AI-generated severity
+            # Display the image (Larger)
+            st.subheader("Uploaded Image:")
+            st.image(image, caption="Your Image", use_container_width=True)
 
-    else:
-        st.info("Please upload an image to start analysis.")
+            # Show image details
+            st.write(f"**Repair Type:** {uploaded_file.name}")  # Placeholder for AI output
+            st.write(f"**Severity:** {image.format}")  # Placeholder for severity detection
 
-# ---- OpenAI API Client ----
-OPEN_AI_KEY = st.secrets["AI_KEY"]
-openai.api_key = OPEN_AI_KEY  # Correctly setting the API key
+            # ---- User Inputs (Only Show When Image is Uploaded) ----
+            location = st.text_input("Home Location")
+            spending = st.selectbox("Willingness to Spend:", ["Low", "Medium", "High"])
 
-# Placeholder values (Replace with AI detection in future)
-damage_type = "Crack"
-severity = "Moderate"
-affected_parts = ["Wall", "Ceiling"]
-labor_cost_factor = 1.2
+            if st.button("🔍 Get Repair Estimate"):
+                with st.spinner("Analyzing the image and calculating costs..."):
+                    estimate = f"Estimated cost range: $1000 - $2000\n- Parts: $500\n- Labor: $1200\n- Additional: $300"
+                
+                # Chat-style response
+                st.markdown(
+                    f"""
+                    <div style='background-color:#00a5e3; padding:15px; border-radius:10px; color:white;'>
+                        <b>Estimated Repair Cost:</b>  
+                        {estimate}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+        else:
+            st.info("📤 Please upload an image to start the analysis.")
 
-def get_damage_estimate(damage_type, severity, affected_parts, location, labor_cost_factor):
-    """Sends details to OpenAI to estimate repair costs."""
-    prompt = f"""
-    You are an expert in repair cost estimation. Given the details below, provide an estimated cost range in USD with a breakdown of parts, labor, and additional costs.
+    elif mode == "Chat Assistant":
+        st.header("💬 Chat Assistant")
 
-    - Damage Type: {damage_type}
-    - Severity: {severity}
-    - Affected Parts: {', '.join(affected_parts)}
-    - Location: {location}
-    - Labor Cost Factor: {labor_cost_factor}
+        # Chat Input
+        user_input = st.text_input("Ask me about home repairs, damage estimates, and renovation tips.")
+        
+        if st.button("Send"):
+            with st.spinner("Analyzing..."):
+                response = openai.ChatCompletion.create(
+                    model="gpt-4",
+                    messages=[{"role": "user", "content": user_input}]
+                )
+                assistant_reply = response["choices"][0]["message"]["content"]
 
-    Return a structured response like:
-    Estimated Cost: $X - $Y
-    Breakdown:
-    - Parts: $A
-    - Labor: $B
-    - Additional Costs: $C (paint, finishing, etc.)
-    """
-
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}]
-    )
-
-    return response["choices"][0]["message"]["content"]
-
-# ---- User Inputs ----
-location = st.text_input("Home Location")
-spending = st.selectbox("Willingness to Spend:", ["Low", "Medium", "High"])
-
-if st.button("Get Repair Estimate"):
-    with st.spinner("Analyzing the image and calculating costs..."):
-        estimate = get_damage_estimate(damage_type, severity, affected_parts, location, labor_cost_factor)
-    
-    # Chat-style response
-    st.markdown(
-        f"""
-        <div style='background-color:#00a5e3; padding:15px; border-radius:10px; color:white;'>
-            <b>Estimated Repair Cost:</b>  
-            {estimate}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+            # Display Chat Response
+            st.markdown(
+                f"""
+                <div style='background-color:#00a5e3; padding:15px; border-radius:10px; color:white;'>
+                     <b>Assistant:</b>  
+                    {assistant_reply}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
